@@ -1,6 +1,7 @@
 const { Client, Intents, GuildChannel, ThreadChannel } = require("discord.js");
 
 const { config, db, secret } = require("./configs");
+const { isHoliday, isWeekend } = require("./utils/date");
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
@@ -26,26 +27,8 @@ function resetAlarms() {
  *
  * @param {Date} date
  */
-function isHoliday(date) {
-  return (
-    config
-      .get("holidays")
-      .filter(
-        (holidayDate) =>
-          holidayDate[2] === date.getFullYear() &&
-          holidayDate[0] === date.getMonth() + 1 &&
-          holidayDate[1] === date.getDate()
-      ).length > 0
-  );
-}
-
-/**
- *
- * @param {Date} date
- */
 function getReminder(date) {
-  if (date.getDay() === 0 || date.getDay() === 6 || isHoliday(date)) {
-    // If Sunday or Saturday, or if it is a holiday, don't remind!
+  if (isWeekend() || isHoliday(config, date)) {
     return;
   }
 
