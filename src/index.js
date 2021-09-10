@@ -1,14 +1,14 @@
 const { Client, Intents, GuildChannel, ThreadChannel } = require("discord.js");
 
 const { config, db, secret } = require("./configs");
-const { isHoliday, isWeekend } = require("./utils/date");
+const { createDate, isHoliday, isWeekend } = require("./utils/date");
 const { capitalize } = require("./utils/string");
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
 // https://discord.com/api/oauth2/authorize?client_id=879881286460784690&permissions=134144&scope=bot
 
-let previousDay = new Date().getDay();
+let previousDay = createDate().day();
 
 const alarmStatus = {
   break: {
@@ -35,7 +35,7 @@ function resetAlarms() {
 
 /**
  *
- * @param {Date} date
+ * @param {moment.Moment} date
  * @returns {{title: string, type: string}} The title and type of reminder
  */
 function getReminder(date) {
@@ -49,8 +49,8 @@ function getReminder(date) {
       const reminderData = reminders[reminderType][i];
 
       if (
-        date.getHours() === reminderData.hour &&
-        date.getMinutes() === reminderData.minute &&
+        date.hour() === reminderData.hour &&
+        date.minute() === reminderData.minute &&
         alarmStatus[reminderType][reminderData.title] === false
       ) {
         return {
@@ -130,15 +130,14 @@ client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
 
   setInterval(() => {
-    const date = new Date();
-    date.getMinutes();
+    const date = createDate();
 
     const reminderTime = getReminder(date);
     // Check if the alarm for this reminder time has been done already
     if (reminderTime !== undefined && !alarmStatus[reminderTime]) {
       sendReminders(reminderTime);
-    } else if (previousDay !== date.getDay()) {
-      previousDay = date.getDay();
+    } else if (previousDay !== date.day()) {
+      previousDay = date.day();
       resetAlarms();
     }
   }, 15 * 1000); // Check 15 every seconds

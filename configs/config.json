@@ -1,15 +1,15 @@
 {
   "reminders": {
     "break": [
-      { "hour": 14, "minute": 15, "title": "lunch" },
-      { "hour": 17, "minute": 45, "title": "afternoon" }
+      { "hour": 11, "minute": 15, "title": "lunch" },
+      { "hour": 14, "minute": 45, "title": "afternoon" }
     ],
     "checkin": [
-      { "hour": 10, "minute": 55, "title": "morning" },
-      { "hour": 15, "minute": 25, "title": "lunch" },
-      { "hour": 17, "minute": 55, "title": "afternoon" }
+      { "hour": 7, "minute": 55, "title": "morning" },
+      { "hour": 12, "minute": 25, "title": "lunch" },
+      { "hour": 14, "minute": 55, "title": "afternoon" }
     ],
-    "report": [{ "hour": 20, "minute": 1, "title": "report" }]
+    "report": [{ "hour": 17, "minute": 1, "title": "report" }]
   },
   "holidays": [
     [9, 6, 2021],
