@@ -2,6 +2,7 @@ const { Client, Intents, GuildChannel, ThreadChannel } = require("discord.js");
 
 const { config, db, secret } = require("./configs");
 const { isHoliday, isWeekend } = require("./utils/date");
+const { capitalize } = require("./utils/string");
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
@@ -10,49 +11,108 @@ const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 let previousDay = new Date().getDay();
 
 const alarmStatus = {
-  morning: false,
-  lunch: false,
-  afternoon: false,
-  report: false,
+  break: {
+    lunch: false,
+    afternoon: false,
+  },
+  checkin: {
+    morning: false,
+    lunch: false,
+    afternoon: false,
+  },
+  report: {
+    report: false,
+  },
 };
 
 function resetAlarms() {
-  alarmStatus.morning = false;
-  alarmStatus.lunch = false;
-  alarmStatus.afternoon = false;
-  alarmStatus.report = false;
-}
-
-/**
- *
- * @param {Date} date
- */
-function getReminder(date) {
-  if (isWeekend(date) || isHoliday(config, date)) {
-    return;
-  }
-
-  for (let i = 0; i < config.get("reminders").length; i++) {
-    const alarm = config.get("reminders")[i];
-    if (date.getHours() === alarm[0] && date.getMinutes() === alarm[1]) {
-      return alarm[2];
+  for (const key in alarmStatus) {
+    for (const subKey in alarmStatus[key]) {
+      alarmStatus[key][subKey] = false;
     }
   }
 }
 
 /**
  *
- * @param {string} timeOfDay key of alarmStatus to mark as true
+ * @param {Date} date
+ * @returns {{title: string, type: string}} The title and type of reminder
  */
-function sendReminders(timeOfDay) {
-  alarmStatus[timeOfDay] = true;
+function getReminder(date) {
+  if (isWeekend(date) || isHoliday(config, date)) {
+    return;
+  }
 
-  db.get("alertChannels")?.forEach((guildChannelInfo) => {
-    const guild = client.guilds.cache.get(guildChannelInfo.guildId);
-    const channel = guild?.channels.cache.get(guildChannelInfo.channelId);
+  const reminders = config.get("reminders");
+  for (const reminderType in reminders) {
+    for (let i = 0; i < reminders[reminderType].length; i++) {
+      const reminderData = reminders[reminderType][i];
+
+      if (
+        date.getHours() === reminderData.hour &&
+        date.getMinutes() === reminderData.minute &&
+        alarmStatus[reminderType][reminderData.title] === false
+      ) {
+        return {
+          title: reminderData.title,
+          type: reminderType,
+        };
+      }
+    }
+  }
+}
+
+/**
+ *
+ * @param {sting} title
+ * @param {sting} type
+ * @returns {string}
+ */
+function generateReminderMessage(title, type) {
+  switch (type) {
+    case "break": {
+      const breakPeriod =
+        title === "lunch" ? "1 hour and 15 minute" : "15 minute";
+      return `Your ${breakPeriod} ${title} break has started.`;
+    }
+    case "checkin":
+      return `${capitalize(title)} check-in reminder!`;
+    case "report":
+      return "Remember to fill out your daily report!";
+    default:
+      console.error("Unsupported reminder data type:", type);
+  }
+}
+
+/**
+ *
+ * @param {{title: string, type: string}} reminderData
+ */
+function sendReminders({ title, type }) {
+  alarmStatus[type][title] = true;
+
+  const message = generateReminderMessage(title, type);
+
+  if (!message) {
+    return;
+  }
+
+  db.get("alertChannels")?.forEach((guildData) => {
+    if (type === "break" && !guildData.breakReminders) {
+      return;
+    }
+    if (type === "checkin" && !guildData.checkinReminders) {
+      return;
+    }
+    if (type === "report" && !guildData.reportReminders) {
+      return;
+    }
+
+    const guild = client.guilds.cache.get(guildData.guildId);
+    const channel = guild?.channels.cache.get(guildData.channelId);
 
     if (channel) {
-      sendReminder(channel, timeOfDay);
+      sendReminder(channel, message);
     }
   });
 }
@@ -60,14 +120,10 @@ function sendReminders(timeOfDay) {
 /**
  *
  * @param {GuildChannel | ThreadChannel} channel the channel to send the reminder to
- * @param {string} timeOfDay key of alarmStatus to mark as true
+ * @param {string} message the message to send
  */
-function sendReminder(channel, timeOfDay) {
-  if (timeOfDay === "report") {
-    channel.send("@everyone Remember to fill out your daily report!");
-  } else {
-    channel.send("@everyone Time to check in!");
-  }
+function sendReminder(channel, message) {
+  channel.send(`@everyone ${message}`);
 }
 
 client.on("ready", () => {

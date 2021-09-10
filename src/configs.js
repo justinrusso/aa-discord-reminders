@@ -3,12 +3,35 @@ const path = require("path");
 
 const configPath = path.join(process.cwd(), "configs");
 
+const alarmsTypeSchema = {
+  type: "array",
+  contains: {
+    type: "object",
+    properties: {
+      hour: {
+        type: "number",
+      },
+      minute: {
+        type: "number",
+      },
+      title: {
+        type: "string",
+      },
+    },
+  },
+};
+
 const config = new Conf({
   configName: "config",
   cwd: configPath,
   schema: {
     alarms: {
-      type: "array",
+      type: "object",
+      properties: {
+        break: alarmsTypeSchema,
+        checkin: alarmsTypeSchema,
+        report: alarmsTypeSchema,
+      },
     },
     holidays: {
       type: "array",
@@ -30,6 +53,15 @@ const db = new Conf({
           },
           guildId: {
             type: "string",
+          },
+          breakReminders: {
+            type: "boolean",
+          },
+          checkinReminders: {
+            type: "boolean",
+          },
+          reportReminders: {
+            type: "boolean",
           },
         },
       },
