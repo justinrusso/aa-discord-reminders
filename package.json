@@ -1,0 +1,15 @@
+{
+  "name": "aa-discord-checkin-reminder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "conf": "^10.0.2",
+    "discord.js": "^13.1.0"
+  }
+}
