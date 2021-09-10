@@ -28,7 +28,7 @@ function resetAlarms() {
  * @param {Date} date
  */
 function getReminder(date) {
-  if (isWeekend() || isHoliday(config, date)) {
+  if (isWeekend(date) || isHoliday(config, date)) {
     return;
   }
 
